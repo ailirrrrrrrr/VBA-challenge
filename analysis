@@ -1,0 +1,122 @@
+Sub analysis()
+
+For Each ws In Worksheets
+
+ws.Range("I1").Value = "Ticker"
+ws.Range("J1").Value = "Yearly Change"
+ws.Range("K1").Value = "Percent Change"
+ws.Range("L1").Value = "Total Stock Volume"
+
+Dim tickerlr, datalr As Long
+tickerlr = ws.Cells(Rows.Count, 9).End(xlUp).Row
+datalr = ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+'select unique value for ticker
+ws.Range("A2:A" & datalr).AdvancedFilter Action:=xlFilterCopy, Copytorange:=ws.Range("I2"), Unique:=True
+
+'calculate yearly change & percent change
+Dim openp, closep As Long
+Dim r, t As Long
+
+Dim rng As Range
+For Each rng In Range("B:B").Columns
+    rng.TextToColumns
+Next rng
+
+For r = 2 To tickerlr
+    
+    For t = 2 To datalr
+    
+    If ws.Cells(t, 1).Value = ws.Cells(r, 9).Value And ws.Cells(t, 2).Value = ws.Cells(2, 2).Value Then
+    openp = ws.Cells(t, 3).Value
+    
+    ElseIf ws.Cells(t, 1).Value = ws.Cells(r, 9).Value And ws.Cells(t + 1, 2).Value > ws.Cells(t, 2).Value Then
+    closep = ws.Cells(t + 1, 6).Value
+    
+    End If
+    Next t
+    
+    ws.Cells(r, 10).Value = closep - openp
+    ws.Cells(r, 11).Value = FormatPercent((closep - openp) / openp)
+    
+Next r
+ 
+'change color
+Dim c As Long
+For c = 2 To tickerlr
+    If ws.Cells(c, 11).Value >= 0 Then
+    ws.Cells(c, 11).Interior.ColorIndex = 4
+    
+    Else
+    ws.Cells(c, 11).Interior.ColorIndex = 3
+    End If
+Next c
+
+    
+'calculate total stock volume
+Dim volume, i, j As Long
+
+For i = 2 To tickerlr
+    
+    volume = 0
+    For j = 2 To datalr
+    If ws.Cells(j, 1).Value = ws.Cells(i, 9).Value Then
+    volume = volume + ws.Cells(j, 7).Value
+    End If
+    Next j
+    
+    Cells(i, 12).Value = volume
+
+Next i
+
+
+'greatest % increase
+ws.Range("N2").Value = "Greatest % Increase"
+ws.Range("N3").Value = "Greatest % Decrease"
+ws.Range("N4").Value = "Greatest Total Volume"
+ws.Range("O1").Value = "Ticker"
+ws.Range("P1").Value = "Value"
+
+Dim percentin, percentde, greatv, v, h, s As Long
+
+percentin = 0
+percentde = 0
+greatv = 0
+
+For v = 2 To tickerlr
+
+    If ws.Cells(v, 11).Value >= percentin Then
+    percentin = ws.Cells(v, 11).Value
+    ws.Range("P2").Value = FormatPercent(percentin)
+    ws.Range("O2").Value = ws.Cells(v, 9).Value
+    End If
+
+Next v
+ 
+
+
+For s = 2 To tickerlr
+ 
+    If ws.Cells(s, 11).Value <= percentde Then
+    percentde = ws.Cells(s, 11).Value
+    ws.Range("P3").Value = FormatPercent(percentde)
+    ws.Range("O3").Value = ws.Cells(s, 9).Value
+    End If
+
+Next s
+
+
+For h = 2 To tickerlr
+
+    If ws.Cells(h, 12).Value >= greatv Then
+    greatv = ws.Cells(h, 12).Value
+    ws.Range("O4").Value = ws.Cells(h, 9)
+    ws.Range("P4").Value = greatv
+    End If
+    
+Next h
+
+
+
+Next ws
+End Sub
